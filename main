@@ -5,6 +5,7 @@ from config import BOT_TOKEN
 import wikipedia
 import requests
 from bs4 import BeautifulSoup
+import random
 
 wikipedia.set_lang("ru")
 
@@ -15,7 +16,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-reply_keyboard = [['/start'], ['/help'], ['/rating']]
+reply_keyboard = [['/start'], ['/help'], ['/rating'], ['/random_film']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 
 
@@ -46,8 +47,9 @@ async def start(update, context):
 async def help_command(update, context):
     """Отправляет сообщение когда получена команда /help"""
     await update.message.reply_text(
-        "Напишите название фильма/сериала, чтобы получить основную информацию о нем.\n Воспользуйтесь фунцией /rating,"
-        " чтобы получить список рекомендованных фильмов и их рейтингов.")
+        "Напишите название фильма/сериала, чтобы получить основную информацию о нем.\nВоспользуйтесь фунцией /rating,"
+        " чтобы получить список рекомендованных фильмов и их рейтингов.\nВоспользуйтесь фунцией /random_film, чтобы"
+        "получить название рандомного фильма.")
 
 
 async def rating(update, context):
@@ -281,6 +283,15 @@ async def r16(update, context):
     await update.message.reply_text('\n'.join(spisok))
 
 
+async def random_film(update, context):
+    f = open('films.txt', encoding='utf8')
+    a = f.readlines()
+    if a:
+        film = random.choice(a)
+    f.close()
+    await update.message.reply_text(film)
+
+
 def main():
     # Создаём объект Application.
     # Вместо слова "TOKEN" надо разместить полученный от @BotFather токен
@@ -314,6 +325,7 @@ def main():
     application.add_handler(CommandHandler("r14", r14))
     application.add_handler(CommandHandler("r15", r15))
     application.add_handler(CommandHandler("r16", r16))
+    application.add_handler(CommandHandler("random_film", random_film))
 
     # Запускаем приложение.
     application.run_polling()
