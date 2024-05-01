@@ -1,7 +1,12 @@
 import logging
-from telegram.ext import Application, MessageHandler, filters, CommandHandler
+from telegram.ext import Application, MessageHandler, filters, CommandHandler, ConversationHandler
 from telegram import ReplyKeyboardMarkup
 from config import BOT_TOKEN
+import wikipedia
+import requests
+from bs4 import BeautifulSoup
+
+wikipedia.set_lang("ru")
 
 # Запускаем логгирование
 logging.basicConfig(
@@ -10,8 +15,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
-reply_keyboard = [['/start'], ['/help']]
+reply_keyboard = [['/start'], ['/help'], ['/rating']]
 markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
 
 
@@ -23,22 +27,258 @@ async def echo(update, context):
     # У message есть поле text, содержащее текст полученного сообщения,
     # а также метод reply_text(str),
     # отсылающий ответ пользователю, от которого получено сообщение.
-    await update.message.reply_text(update.message.text)
+    word = update.message.text
+    try:
+        await update.message.reply_text(wikipedia.summary(f"{word} фильм"))
+    except:
+        await update.message.reply_text(f'По запросу {word} ничего не найдено')
 
 
 async def start(update, context):
     """Отправляет сообщение когда получена команда /start"""
     user = update.effective_user
     await update.message.reply_html(
-        rf"Привет {user.mention_html()}! Я эхо-бот. Напишите мне что-нибудь, и я пришлю это назад!",
+        rf"Привет {user.mention_html()}! Напишите мне название любого фильма/сериала и я пришлю всю имеющуюся информацию о нем.",
         reply_markup=markup
     )
 
 
 async def help_command(update, context):
     """Отправляет сообщение когда получена команда /help"""
-    await update.message.reply_text("Я пока не умею помогать... Я только ваше эхо.")
+    await update.message.reply_text(
+        "Напишите название фильма/сериала, чтобы получить основную информацию о нем.\n Воспользуйтесь фунцией /rating,"
+        " чтобы получить список рекомендованных фильмов и их рейтингов.")
 
+
+async def rating(update, context):
+    await update.message.reply_text(
+        'Выбирите жанр:\n /r1 - Фантастика\n /r2 - Боевик\n /r3 - Комедия\n /r4 - Триллер\n /r5 - Приключения\n'
+        ' /r6 - Криминал\n /r7 - Ужасы\n /r8 - Детектив\n /r9 - Драма\n /r10 - Мелодрама\n /r11 - Семейный\n '
+        '/r12 - Фэнтези\n /r13 - Биография\n /r14 - Вестерн\n /r15 - Документальный\n /r16 - Исторический')
+
+
+async def r1(update, context):
+    url = 'https://big.seriatime.life/fantastika/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r2(update, context):
+    url = 'https://big.seriatime.life/boevik/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r3(update, context):
+    url = 'https://big.seriatime.life/komedija/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r4(update, context):
+    url = 'https://big.seriatime.life/triller/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r5(update, context):
+    url = 'https://big.seriatime.life/prikljuchenija/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r6(update, context):
+    url = 'https://big.seriatime.life/kriminal/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r7(update, context):
+    url = 'https://big.seriatime.life/uzhasy/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r8(update, context):
+    url = 'https://big.seriatime.life/detektiv/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r9(update, context):
+    url = 'https://big.seriatime.life/drama/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r10(update, context):
+    url = 'https://big.seriatime.life/melodrama/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r11(update, context):
+    url = 'https://big.seriatime.life/semejnyj/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r12(update, context):
+    url = 'https://big.seriatime.life/fjentezi/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r13(update, context):
+    url = 'https://big.seriatime.life/biografija/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r14(update, context):
+    url = 'https://big.seriatime.life/vestern/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r15(update, context):
+    url = 'https://big.seriatime.life/dokumentalnyj/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
+
+
+async def r16(update, context):
+    url = 'https://big.seriatime.life/istorija/'
+
+    response = requests.get(url)
+    data = BeautifulSoup(response.text, 'html.parser')
+    spisok = []
+    for film_data in data.find_all('div', class_='th-item'):
+        name = film_data.div.img['alt']
+        kp = data.find('div', class_='th-rate th-rate-kp').text
+        imdb = data.find('div', class_='th-rate th-rate-imdb').text
+        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
+    await update.message.reply_text('\n'.join(spisok))
 
 
 def main():
@@ -57,6 +297,23 @@ def main():
     application.add_handler(text_handler)
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("rating", rating))
+    application.add_handler(CommandHandler("r1", r1))
+    application.add_handler(CommandHandler("r2", r2))
+    application.add_handler(CommandHandler("r3", r3))
+    application.add_handler(CommandHandler("r4", r4))
+    application.add_handler(CommandHandler("r5", r5))
+    application.add_handler(CommandHandler("r6", r6))
+    application.add_handler(CommandHandler("r7", r7))
+    application.add_handler(CommandHandler("r8", r8))
+    application.add_handler(CommandHandler("r9", r9))
+    application.add_handler(CommandHandler("r10", r10))
+    application.add_handler(CommandHandler("r11", r11))
+    application.add_handler(CommandHandler("r12", r12))
+    application.add_handler(CommandHandler("r13", r13))
+    application.add_handler(CommandHandler("r14", r14))
+    application.add_handler(CommandHandler("r15", r15))
+    application.add_handler(CommandHandler("r16", r16))
 
     # Запускаем приложение.
     application.run_polling()
