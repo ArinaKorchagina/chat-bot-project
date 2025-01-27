@@ -1,5 +1,5 @@
 import logging
-from telegram.ext import Application, MessageHandler, filters, CommandHandler, ConversationHandler
+from telegram.ext import Application, MessageHandler, filters, CommandHandler
 from telegram import ReplyKeyboardMarkup
 from config import BOT_TOKEN
 import wikipedia
@@ -39,7 +39,7 @@ async def start(update, context):
     """Отправляет сообщение когда получена команда /start"""
     user = update.effective_user
     await update.message.reply_html(
-        rf"Привет {user.mention_html()}! Напишите мне название любого фильма/сериала и я пришлю всю имеющуюся информацию о нем.",
+        rf"Привет {user.mention_html()}! Воспользуйся функцией /help, чтобы узнать что я могу.",
         reply_markup=markup
     )
 
@@ -48,242 +48,270 @@ async def help_command(update, context):
     """Отправляет сообщение когда получена команда /help"""
     await update.message.reply_text(
         "Напишите название фильма/сериала, чтобы получить основную информацию о нем.\nВоспользуйтесь фунцией /rating,"
-        " чтобы получить список рекомендованных фильмов и их рейтингов.\nВоспользуйтесь фунцией /random_film, чтобы"
-        " получить название рандомного фильма.")
+        " чтобы получить список рекомендованных фильмов и ссылок на их трейлеры.\nВоспользуйтесь фунцией /random_film,"
+        " если абсолютно не знаете что посмотреть.")
 
 
 async def rating(update, context):
     await update.message.reply_text(
         'Выбирите жанр:\n /r1 - Фантастика\n /r2 - Боевик\n /r3 - Комедия\n /r4 - Триллер\n /r5 - Приключения\n'
         ' /r6 - Криминал\n /r7 - Ужасы\n /r8 - Детектив\n /r9 - Драма\n /r10 - Мелодрама\n /r11 - Семейный\n '
-        '/r12 - Фэнтези\n /r13 - Биография\n /r14 - Вестерн\n /r15 - Документальный\n /r16 - Исторический')
+        '/r12 - Мультфильмы\n /r13 - Биография\n /r14 - Вестерн\n /r15 - Спортивный\n /r16 - Исторический')
 
 
 async def r1(update, context):
-    url = 'https://big.seriatime.life/fantastika/'
+    # URL страницы для парсинга
+    url = 'https://baskino.ai/films/fantasticheskie/'
 
-    response = requests.get(url)
+    # Определение заголовков, включая User-Agent
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+
+    # Отправка GET-запроса на веб-страницу с заголовками
+    response = requests.get(url, headers=headers)
+
+    # Парсинг HTML-контента
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+
+    # Создание списка для хранения названий фильмов
+    movie_list = []
+
+    # Извлечение информации о фильмах
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r2(update, context):
-    url = 'https://big.seriatime.life/boevik/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/boeviki/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r3(update, context):
-    url = 'https://big.seriatime.life/komedija/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/komedii/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r4(update, context):
-    url = 'https://big.seriatime.life/triller/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/trillery/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r5(update, context):
-    url = 'https://big.seriatime.life/prikljuchenija/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/priklyuchencheskie/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r6(update, context):
-    url = 'https://big.seriatime.life/kriminal/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/kriminalnye/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r7(update, context):
-    url = 'https://big.seriatime.life/uzhasy/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/uzhasy/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r8(update, context):
-    url = 'https://big.seriatime.life/detektiv/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/detektivy/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r9(update, context):
-    url = 'https://big.seriatime.life/drama/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/dramy/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r10(update, context):
-    url = 'https://big.seriatime.life/melodrama/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/melodramy/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r11(update, context):
-    url = 'https://big.seriatime.life/semejnyj/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/semeynye/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r12(update, context):
-    url = 'https://big.seriatime.life/fjentezi/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/multfilmy/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r13(update, context):
-    url = 'https://big.seriatime.life/biografija/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/biograficheskie/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r14(update, context):
-    url = 'https://big.seriatime.life/vestern/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/vesterny/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r15(update, context):
-    url = 'https://big.seriatime.life/dokumentalnyj/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/sportivnye/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def r16(update, context):
-    url = 'https://big.seriatime.life/istorija/'
-
-    response = requests.get(url)
+    url = 'https://baskino.ai/films/istoricheskie/'
+    headers = {
+        'User -Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
     data = BeautifulSoup(response.text, 'html.parser')
-    spisok = []
-    for film_data in data.find_all('div', class_='th-item'):
-        name = film_data.div.img['alt']
-        kp = data.find('div', class_='th-rate th-rate-kp').text
-        imdb = data.find('div', class_='th-rate th-rate-imdb').text
-        spisok.append(name + ' КП:' + kp + '★ IMDb:' + imdb + '★')
-    await update.message.reply_text('\n'.join(spisok))
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
 
 
 async def random_film(update, context):
+    global film
     f = open('films.txt', encoding='utf8')
     a = f.readlines()
     if a:
