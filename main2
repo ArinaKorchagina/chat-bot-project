@@ -1,0 +1,135 @@
+import logging
+from telegram.ext import Application, MessageHandler, filters, CommandHandler
+from telegram import ReplyKeyboardMarkup
+from config import BOT_TOKEN
+import wikipedia
+import requests
+from bs4 import BeautifulSoup
+import random
+
+wikipedia.set_lang("ru")
+
+# Логирование
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
+# Клавиатура
+reply_keyboard = [['/start'], ['/help'], ['/rating'], ['/random_film']]
+markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+
+# Словарь URL жанров
+GENRE_URLS = {
+    'r1': 'https://baskino.ai/films/fantasticheskie/',
+    'r2': 'https://baskino.ai/films/boeviki/',
+    'r3': 'https://baskino.ai/films/komedii/',
+    'r4': 'https://baskino.ai/films/trillery/',
+    'r5': 'https://baskino.ai/films/priklyuchencheskie/',
+    'r6': 'https://baskino.ai/films/kriminalnye/',
+    'r7': 'https://baskino.ai/films/uzhasy/',
+    'r8': 'https://baskino.ai/films/detektivy/',
+    'r9': 'https://baskino.ai/films/dramy/',
+    'r10': 'https://baskino.ai/films/melodramy/',
+    'r11': 'https://baskino.ai/films/semeynye/',
+    'r12': 'https://baskino.ai/films/multfilmy/',
+    'r13': 'https://baskino.ai/films/biograficheskie/',
+    'r14': 'https://baskino.ai/films/vesterny/',
+    'r15': 'https://baskino.ai/films/sportivnye/',
+    'r16': 'https://baskino.ai/films/istoricheskie/'
+}
+
+
+# Функция для парсинга фильмов
+async def parse_movies(update, context, url):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(url, headers=headers)
+    data = BeautifulSoup(response.text, 'html.parser')
+    movie_list = []
+    for film_data in data.find_all('div', class_='shortpost'):
+        name = film_data.div.a.img['alt']
+        link = film_data.div.a['href']
+        movie_list.append(name + ' --- ' + link)
+    await update.message.reply_text('\n'.join(movie_list))
+
+
+# Обработчики команд
+async def start(update, context):
+    user = update.effective_user
+    await update.message.reply_html(
+        rf"Привет {user.mention_html()}! Воспользуйся функцией /help, чтобы узнать что я могу.",
+        reply_markup=markup
+    )
+
+
+async def echo(update, context):
+    # У объекта класса Updater есть поле message,
+    # являющееся объектом сообщения.
+    # У message есть поле text, содержащее текст полученного сообщения,
+    # а также метод reply_text(str),
+    # отсылающий ответ пользователю, от которого получено сообщение.
+    word = update.message.text
+    try:
+        await update.message.reply_text(wikipedia.summary(f"{word} фильм"))
+    except wikipedia.exceptions.PageError:
+        await update.message.reply_text(f'По запросу {word} ничего не найдено')
+    except wikipedia.exceptions.DisambiguationError:
+        await update.message.reply_text(f'Запрос {word} неоднозначен. Уточните запрос.')
+    except Exception as e:
+        await update.message.reply_text(f'Произошла ошибка: {e}')
+
+
+async def help_command(update, context):
+    await update.message.reply_text(
+        "Напишите название фильма/сериала, чтобы получить основную информацию о нем.\nВоспользуйтесь фунцией /rating,"
+        " чтобы получить список рекомендованных фильмов и ссылок на их трейлеры.\nВоспользуйтесь фунцией /random_film,"
+        " если абсолютно не знаете что посмотреть.")
+
+
+async def rating(update, context):
+    await update.message.reply_text(
+        'Выбирите жанр:\n /r1 - Фантастика\n /r2 - Боевик\n /r3 - Комедия\n /r4 - Триллер\n /r5 - Приключения\n'
+        ' /r6 - Криминал\n /r7 - Ужасы\n /r8 - Детектив\n /r9 - Драма\n /r10 - Мелодрама\n /r11 - Семейный\n '
+        '/r12 - Мультфильмы\n /r13 - Биография\n /r14 - Вестерн\n /r15 - Спортивный\n /r16 - Исторический')
+
+
+async def genre_handler(update, context, genre):
+    url = GENRE_URLS.get(genre)
+    if url:
+        await parse_movies(update, context, url)
+    else:
+        await update.message.reply_text("Жанр не найден.")
+
+
+async def random_film(update, context):
+    with open('films.txt', encoding='utf8') as f:
+        films = f.readlines()
+    if films:
+        film = random.choice(films)
+        await update.message.reply_text(film)
+    else:
+        await update.message.reply_text("Список фильмов пуст.")
+
+
+# Основная функция
+def main():
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Регистрация обработчиков
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("rating", rating))
+    for genre in GENRE_URLS:
+        application.add_handler(
+            CommandHandler(genre, lambda update, context, g=genre: genre_handler(update, context, g)))
+    application.add_handler(CommandHandler("random_film", random_film))
+
+    # Запуск бота
+    application.run_polling()
+
+
+if __name__ == '__main__':
+    main()
